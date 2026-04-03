@@ -2,7 +2,11 @@ composer.lock
 vendor/
 node_modules/
 .phpunit.result.cache
+.phpunit.cache/
 .env
 .DS_Store
 Thumbs.db
 *.log
+coverage/
+coverage.xml
+.phpstan-baseline.php

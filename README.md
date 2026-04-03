@@ -5,6 +5,8 @@ A comprehensive Bangladesh Geo Location data package for Laravel with support fo
 [![Latest Version](https://img.shields.io/packagist/v/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
 [![Total Downloads](https://img.shields.io/packagist/dt/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
 [![License](https://img.shields.io/packagist/l/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
+[![Tests](https://github.com/mazharvai007/bd-geo-location-laravel/actions/workflows/tests.yml/badge.svg)](https://github.com/mazharvai007/bd-geo-location-laravel/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/mazharvai007/bd-geo-location-laravel/branch/main/graph/badge.svg)](https://codecov.io/gh/mazharvai007/bd-geo-location-laravel)
 
 ## Features
 
@@ -277,8 +279,46 @@ Each location entity contains:
 ## Testing
 
 ```bash
+# Run tests
 composer test
+
+# Run tests with coverage report
+composer test:coverage
+
+# Run full CI pipeline locally
+composer ci
 ```
+
+## Development
+
+### Code Quality Checks
+
+This package includes automated code quality checks:
+
+```bash
+# Run static analysis (PHPStan)
+composer analyse
+
+# Validate composer.json
+composer validate --strict
+
+# Run all quality checks
+composer quality
+```
+
+### PHPStan Configuration
+
+The package uses [Larastan](https://github.com/larastan/larastan) for static analysis at level 5. Configuration is in `phpstan.neon`.
+
+### CI/CD
+
+This package uses GitHub Actions for continuous integration:
+
+- ✅ Tests on PHP 8.1, 8.2, 8.3 with Laravel 10 and 11
+- ✅ Static analysis with PHPStan
+- ✅ Code quality checks
+- ✅ Security audits
+- ✅ Code coverage reporting via Codecov
 
 ## Changelog
 
