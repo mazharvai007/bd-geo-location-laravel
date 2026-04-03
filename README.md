@@ -5,6 +5,8 @@ A comprehensive Bangladesh Geo Location data package for Laravel with support fo
 [![Latest Version](https://img.shields.io/packagist/v/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
 [![Total Downloads](https://img.shields.io/packagist/dt/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
 [![License](https://img.shields.io/packagist/l/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
+[![PHP Version](https://img.shields.io/packagist/php-v/mazhar/bd-geo-location?style=flat-square)](https://packagist.org/packages/mazhar/bd-geo-location)
+[![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012-FF2D20?style=flat-square)](https://laravel.com)
 [![Tests](https://github.com/mazharvai007/bd-geo-location-laravel/actions/workflows/tests.yml/badge.svg)](https://github.com/mazharvai007/bd-geo-location-laravel/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/mazharvai007/bd-geo-location-laravel/branch/main/graph/badge.svg)](https://codecov.io/gh/mazharvai007/bd-geo-location-laravel)
 
@@ -23,6 +25,12 @@ A comprehensive Bangladesh Geo Location data package for Laravel with support fo
 - Artisan commands
 - Helper functions
 - Laravel Facade support
+
+## Requirements
+
+- **PHP**: 8.2, 8.3, 8.4
+- **Laravel**: 10, 11, 12
+- **Composer**: 2.x
 
 ## Installation
 
@@ -314,7 +322,7 @@ The package uses [Larastan](https://github.com/larastan/larastan) for static ana
 
 This package uses GitHub Actions for continuous integration:
 
-- ✅ Tests on PHP 8.1, 8.2, 8.3 with Laravel 10 and 11
+- ✅ Tests on PHP 8.2, 8.3, 8.4 with Laravel 10, 11, and 12
 - ✅ Static analysis with PHPStan
 - ✅ Code quality checks
 - ✅ Security audits

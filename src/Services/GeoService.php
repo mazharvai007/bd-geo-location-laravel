@@ -3,6 +3,8 @@
 namespace Mazhar\BDGeoLocation\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class GeoService
 {
@@ -12,10 +14,20 @@ class GeoService
 
     protected int $cacheDuration;
 
+    protected ?array $divisionsCache = null;
+
+    protected ?array $districtsCache = null;
+
+    protected ?array $upazilasCache = null;
+
+    protected ?array $unionsCache = null;
+
+    protected const ALLOWED_TYPES = ['division', 'district', 'upazila', 'union'];
+
     public function __construct()
     {
         $this->dataSource = config('bd-geo.data_source', 'json');
-        $this->cacheDuration = config('bd-geo.cache_duration', 604800); // 7 days default
+        $this->cacheDuration = (int) config('bd-geo.cache_duration', 604800);
 
         $this->loadData();
     }
@@ -25,32 +37,64 @@ class GeoService
      */
     protected function loadData(): void
     {
-        if ($this->dataSource === 'database') {
-            $this->loadFromDatabase();
-        } else {
-            $this->loadFromJson();
+        try {
+            if ($this->dataSource === 'database') {
+                $this->loadFromDatabase();
+            } else {
+                $this->loadFromJson();
+            }
+        } catch (\Exception $e) {
+            report($e);
+            $this->data = [];
         }
     }
 
     /**
-     * Load data from JSON file
+     * Load data from JSON file with error handling
      */
     protected function loadFromJson(): void
     {
         $cacheKey = 'bd-geo-location-data';
 
         $this->data = Cache::remember($cacheKey, $this->cacheDuration, function () {
-            $jsonPath = dirname(__DIR__, 2) . '/data/bangladesh.json';
+            $jsonPath = $this->getDataFilePath();
 
             if (!file_exists($jsonPath)) {
+                report(new \RuntimeException("Geo data file not found: {$jsonPath}"));
+                return [];
+            }
+
+            if (!is_readable($jsonPath)) {
+                report(new \RuntimeException("Geo data file is not readable: {$jsonPath}"));
                 return [];
             }
 
             $jsonContent = file_get_contents($jsonPath);
-            $data = json_decode($jsonContent, true);
 
-            return $data ?? [];
+            if ($jsonContent === false) {
+                report(new \RuntimeException("Failed to read geo data file: {$jsonPath}"));
+                return [];
+            }
+
+            $data = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
+
+            if (!is_array($data)) {
+                report(new \RuntimeException("Invalid geo data format"));
+                return [];
+            }
+
+            return $data;
         });
+    }
+
+    /**
+     * Get cross-platform data file path
+     */
+    protected function getDataFilePath(): string
+    {
+        $path = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'bangladesh.json';
+
+        return $path;
     }
 
     /**
@@ -58,19 +102,43 @@ class GeoService
      */
     protected function loadFromDatabase(): void
     {
-        // This will be used when database models are implemented
-        // For now, fall back to JSON
         $this->loadFromJson();
     }
 
     /**
-     * Get all divisions
+     * Validate location ID format
+     */
+    protected function validateId(string $id): void
+    {
+        if (empty($id) || !is_string($id)) {
+            throw new InvalidArgumentException('Invalid location ID provided');
+        }
+    }
+
+    /**
+     * Validate location type
+     */
+    protected function validateType(string $type): void
+    {
+        if (!in_array($type, self::ALLOWED_TYPES, true)) {
+            throw new InvalidArgumentException(
+                sprintf('Invalid location type "%s". Must be one of: %s', $type, implode(', ', self::ALLOWED_TYPES))
+            );
+        }
+    }
+
+    /**
+     * Get all divisions with caching
      *
      * @return array<int, array>
      */
     public function getAllDivisions(): array
     {
-        return $this->data['divisions'] ?? [];
+        if ($this->divisionsCache === null) {
+            $this->divisionsCache = $this->data['divisions'] ?? [];
+        }
+
+        return $this->divisionsCache;
     }
 
     /**
@@ -78,10 +146,12 @@ class GeoService
      */
     public function getDivisionById(string $id): ?array
     {
+        $this->validateId($id);
+
         $divisions = $this->getAllDivisions();
 
         foreach ($divisions as $division) {
-            if ($division['id'] === $id) {
+            if (isset($division['id']) && (string) $division['id'] === $id) {
                 return $division;
             }
         }
@@ -90,25 +160,34 @@ class GeoService
     }
 
     /**
-     * Get all districts
+     * Get all districts with caching
      *
      * @return array<int, array>
      */
     public function getAllDistricts(): array
     {
-        $districts = [];
+        if ($this->districtsCache === null) {
+            $districts = [];
 
-        foreach ($this->data['divisions'] ?? [] as $division) {
-            foreach ($division['districts'] ?? [] as $district) {
-                $districts[] = array_merge($district, [
-                    'division_id' => $division['id'],
-                    'division_name' => $division['name'],
-                    'division_name_bn' => $division['name_bn'],
-                ]);
+            foreach ($this->getAllDivisions() as $division) {
+                $divisionData = $division ?? [];
+                $divisionId = $divisionData['id'] ?? '';
+                $divisionName = $divisionData['name'] ?? '';
+                $divisionNameBn = $divisionData['name_bn'] ?? '';
+
+                foreach ($divisionData['districts'] ?? [] as $district) {
+                    $districts[] = array_merge($district, [
+                        'division_id' => $divisionId,
+                        'division_name' => $divisionName,
+                        'division_name_bn' => $divisionNameBn,
+                    ]);
+                }
             }
+
+            $this->districtsCache = $districts;
         }
 
-        return $districts;
+        return $this->districtsCache;
     }
 
     /**
@@ -118,6 +197,8 @@ class GeoService
      */
     public function getDistrictsByDivision(string $divisionId): array
     {
+        $this->validateId($divisionId);
+
         $division = $this->getDivisionById($divisionId);
 
         if (!$division) {
@@ -132,10 +213,12 @@ class GeoService
      */
     public function getDistrictById(string $id): ?array
     {
+        $this->validateId($id);
+
         $districts = $this->getAllDistricts();
 
         foreach ($districts as $district) {
-            if ($district['id'] === $id) {
+            if (isset($district['id']) && (string) $district['id'] === $id) {
                 return $district;
             }
         }
@@ -144,28 +227,40 @@ class GeoService
     }
 
     /**
-     * Get all upazilas
+     * Get all upazilas with caching
      *
      * @return array<int, array>
      */
     public function getAllUpazilas(): array
     {
-        $upazilas = [];
+        if ($this->upazilasCache === null) {
+            $upazilas = [];
 
-        foreach ($this->data['divisions'] ?? [] as $division) {
-            foreach ($division['districts'] ?? [] as $district) {
-                foreach ($district['upazilas'] ?? [] as $upazila) {
-                    $upazilas[] = array_merge($upazila, [
-                        'district_id' => $district['id'],
-                        'district_name' => $district['name'],
-                        'division_id' => $division['id'],
-                        'division_name' => $division['name'],
-                    ]);
+            foreach ($this->getAllDivisions() as $division) {
+                $divisionData = $division ?? [];
+                $divisionId = $divisionData['id'] ?? '';
+                $divisionName = $divisionData['name'] ?? '';
+
+                foreach ($divisionData['districts'] ?? [] as $district) {
+                    $districtData = $district ?? [];
+                    $districtId = $districtData['id'] ?? '';
+                    $districtName = $districtData['name'] ?? '';
+
+                    foreach ($districtData['upazilas'] ?? [] as $upazila) {
+                        $upazilas[] = array_merge($upazila, [
+                            'district_id' => $districtId,
+                            'district_name' => $districtName,
+                            'division_id' => $divisionId,
+                            'division_name' => $divisionName,
+                        ]);
+                    }
                 }
             }
+
+            $this->upazilasCache = $upazilas;
         }
 
-        return $upazilas;
+        return $this->upazilasCache;
     }
 
     /**
@@ -175,6 +270,8 @@ class GeoService
      */
     public function getUpazilasByDistrict(string $districtId): array
     {
+        $this->validateId($districtId);
+
         $district = $this->getDistrictById($districtId);
 
         if (!$district) {
@@ -189,10 +286,12 @@ class GeoService
      */
     public function getUpazilaById(string $id): ?array
     {
+        $this->validateId($id);
+
         $upazilas = $this->getAllUpazilas();
 
         foreach ($upazilas as $upazila) {
-            if ($upazila['id'] === $id) {
+            if (isset($upazila['id']) && (string) $upazila['id'] === $id) {
                 return $upazila;
             }
         }
@@ -201,32 +300,48 @@ class GeoService
     }
 
     /**
-     * Get all unions
+     * Get all unions with caching (lazy-loaded for memory efficiency)
      *
      * @return array<int, array>
      */
     public function getAllUnions(): array
     {
-        $unions = [];
+        if ($this->unionsCache === null) {
+            $unions = [];
 
-        foreach ($this->data['divisions'] ?? [] as $division) {
-            foreach ($division['districts'] ?? [] as $district) {
-                foreach ($district['upazilas'] ?? [] as $upazila) {
-                    foreach ($upazila['unions'] ?? [] as $union) {
-                        $unions[] = array_merge($union, [
-                            'upazila_id' => $upazila['id'],
-                            'upazila_name' => $upazila['name'],
-                            'district_id' => $district['id'],
-                            'district_name' => $district['name'],
-                            'division_id' => $division['id'],
-                            'division_name' => $division['name'],
-                        ]);
+            foreach ($this->getAllDivisions() as $division) {
+                $divisionData = $division ?? [];
+                $divisionId = $divisionData['id'] ?? '';
+                $divisionName = $divisionData['name'] ?? '';
+
+                foreach ($divisionData['districts'] ?? [] as $district) {
+                    $districtData = $district ?? [];
+                    $districtId = $districtData['id'] ?? '';
+                    $districtName = $districtData['name'] ?? '';
+
+                    foreach ($districtData['upazilas'] ?? [] as $upazila) {
+                        $upazilaData = $upazila ?? [];
+                        $upazilaId = $upazilaData['id'] ?? '';
+                        $upazilaName = $upazilaData['name'] ?? '';
+
+                        foreach ($upazilaData['unions'] ?? [] as $union) {
+                            $unions[] = array_merge($union, [
+                                'upazila_id' => $upazilaId,
+                                'upazila_name' => $upazilaName,
+                                'district_id' => $districtId,
+                                'district_name' => $districtName,
+                                'division_id' => $divisionId,
+                                'division_name' => $divisionName,
+                            ]);
+                        }
                     }
                 }
             }
+
+            $this->unionsCache = $unions;
         }
 
-        return $unions;
+        return $this->unionsCache;
     }
 
     /**
@@ -236,6 +351,8 @@ class GeoService
      */
     public function getUnionsByUpazila(string $upazilaId): array
     {
+        $this->validateId($upazilaId);
+
         $upazila = $this->getUpazilaById($upazilaId);
 
         if (!$upazila) {
@@ -250,10 +367,12 @@ class GeoService
      */
     public function getUnionById(string $id): ?array
     {
+        $this->validateId($id);
+
         $unions = $this->getAllUnions();
 
         foreach ($unions as $union) {
-            if ($union['id'] === $id) {
+            if (isset($union['id']) && (string) $union['id'] === $id) {
                 return $union;
             }
         }
@@ -262,15 +381,13 @@ class GeoService
     }
 
     /**
-     * Search by name (English or Bengali)
+     * Search by name (English or Bengali) with improved performance
      *
      * @return array<int, array>
      */
     public function searchByName(string $term): array
     {
-        // Sanitize search term
-        $term = trim($term);
-        $term = substr($term, 0, 100); // Limit to 100 characters
+        $term = $this->sanitizeSearchTerm($term);
 
         if (empty($term)) {
             return [];
@@ -279,63 +396,84 @@ class GeoService
         $results = [];
         $termLower = strtolower($term);
 
-        // Search in divisions
-        foreach ($this->getAllDivisions() as $division) {
-            if (str_contains(strtolower($division['name']), $termLower) ||
-                str_contains($division['name_bn'], $term)) {
-                $results[] = array_merge($division, ['type' => 'division']);
-            }
-        }
+        $limit = (int) config('bd-geo.search_limit', 100);
 
-        // Search in districts
-        foreach ($this->getAllDistricts() as $district) {
-            if (str_contains(strtolower($district['name']), $termLower) ||
-                str_contains($district['name_bn'], $term)) {
-                $results[] = array_merge($district, ['type' => 'district']);
+        $searchInCollection = function (array $collection, string $type) use ($termLower, &$results, $limit): void {
+            if (count($results) >= $limit) {
+                return;
             }
-        }
 
-        // Search in upazilas
-        foreach ($this->getAllUpazilas() as $upazila) {
-            if (str_contains(strtolower($upazila['name']), $termLower) ||
-                str_contains($upazila['name_bn'], $term)) {
-                $results[] = array_merge($upazila, ['type' => 'upazila']);
-            }
-        }
+            foreach ($collection as $item) {
+                if (count($results) >= $limit) {
+                    break;
+                }
 
-        // Search in unions
-        foreach ($this->getAllUnions() as $union) {
-            if (str_contains(strtolower($union['name']), $termLower) ||
-                str_contains($union['name_bn'], $term)) {
-                $results[] = array_merge($union, ['type' => 'union']);
+                $name = $item['name'] ?? '';
+                $nameBn = $item['name_bn'] ?? '';
+
+                if ($this->matchesSearchTerm($name, $nameBn, $termLower)) {
+                    $results[] = array_merge($item, ['type' => $type]);
+                }
             }
+        };
+
+        $searchInCollection($this->getAllDivisions(), 'division');
+        $searchInCollection($this->getAllDistricts(), 'district');
+        $searchInCollection($this->getAllUpazilas(), 'upazila');
+
+        if (count($results) < $limit) {
+            $searchInCollection($this->getAllUnions(), 'union');
         }
 
         return $results;
     }
 
     /**
-     * Get complete hierarchy for a location
+     * Sanitize search term
+     */
+    protected function sanitizeSearchTerm(string $term): string
+    {
+        $term = trim($term);
+        $term = strip_tags($term);
+        $term = preg_replace('/[\x00-\x1F\x7F]/u', '', $term);
+        $term = mb_substr($term, 0, 100, 'UTF-8');
+
+        return $term;
+    }
+
+    /**
+     * Check if location matches search term
+     */
+    protected function matchesSearchTerm(string $name, string $nameBn, string $termLower): bool
+    {
+        $nameLower = strtolower($name);
+
+        return str_contains($nameLower, $termLower) || str_contains($nameBn, $termLower);
+    }
+
+    /**
+     * Get complete hierarchy for a location with validation
      */
     public function getGeoHierarchy(string $id, string $type): ?array
     {
-        $item = null;
+        $this->validateId($id);
+        $this->validateType($type);
+
         $hierarchy = [];
 
         switch ($type) {
             case 'division':
                 $item = $this->getDivisionById($id);
                 if ($item) {
-                    $hierarchy = [
-                        'division' => $item,
-                    ];
+                    $hierarchy = ['division' => $item];
                 }
                 break;
 
             case 'district':
                 $item = $this->getDistrictById($id);
                 if ($item) {
-                    $division = $this->getDivisionById($item['division_id'] ?? '');
+                    $divisionId = is_array($item) ? ($item['division_id'] ?? '') : '';
+                    $division = $this->getDivisionById($divisionId);
                     $hierarchy = [
                         'division' => $division,
                         'district' => $item,
@@ -346,8 +484,9 @@ class GeoService
             case 'upazila':
                 $item = $this->getUpazilaById($id);
                 if ($item) {
-                    $district = $this->getDistrictById($item['district_id'] ?? '');
-                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '') : null;
+                    $districtId = is_array($item) ? ($item['district_id'] ?? '') : '';
+                    $district = $this->getDistrictById($districtId);
+                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '' ?? '') : null;
                     $hierarchy = [
                         'division' => $division,
                         'district' => $district,
@@ -359,9 +498,10 @@ class GeoService
             case 'union':
                 $item = $this->getUnionById($id);
                 if ($item) {
-                    $upazila = $this->getUpazilaById($item['upazila_id'] ?? '');
-                    $district = $upazila ? $this->getDistrictById($upazila['district_id'] ?? '') : null;
-                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '') : null;
+                    $upazilaId = is_array($item) ? ($item['upazila_id'] ?? '') : '';
+                    $upazila = $this->getUpazilaById($upazilaId);
+                    $district = $upazila ? $this->getDistrictById($upazila['district_id'] ?? '' ?? '') : null;
+                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '' ?? '') : null;
                     $hierarchy = [
                         'division' => $division,
                         'district' => $district,
@@ -376,10 +516,30 @@ class GeoService
     }
 
     /**
-     * Clear the geo data cache
+     * Clear all caches including computed data
      */
     public function clearCache(): void
     {
         Cache::forget('bd-geo-location-data');
+
+        $this->divisionsCache = null;
+        $this->districtsCache = null;
+        $this->upazilasCache = null;
+        $this->unionsCache = null;
+    }
+
+    /**
+     * Get statistics about the data
+     */
+    public function getStatistics(): array
+    {
+        return [
+            'divisions' => count($this->getAllDivisions()),
+            'districts' => count($this->getAllDistricts()),
+            'upazilas' => count($this->getAllUpazilas()),
+            'unions' => count($this->getAllUnions()),
+            'data_source' => $this->dataSource,
+            'cache_enabled' => $this->cacheDuration > 0,
+        ];
     }
 }

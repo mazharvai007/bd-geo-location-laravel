@@ -19,6 +19,8 @@ use Mazhar\BDGeoLocation\Services\GeoService;
  * @method static array getAllDistricts()
  * @method static array getAllUpazilas()
  * @method static array getAllUnions()
+ * @method static void clearCache()
+ * @method static array getStatistics()
  *
  * @see GeoService
  */

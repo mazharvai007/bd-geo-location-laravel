@@ -123,3 +123,25 @@ if (!function_exists('bd_geo_hierarchy')) {
         return BDGeo::getGeoHierarchy($id, $type);
     }
 }
+
+if (!function_exists('bd_geo_clear_cache')) {
+    /**
+     * Clear the geo data cache.
+     */
+    function bd_geo_clear_cache(): void
+    {
+        BDGeo::clearCache();
+    }
+}
+
+if (!function_exists('bd_geo_stats')) {
+    /**
+     * Get statistics about the geo data.
+     *
+     * @return array<string, mixed>
+     */
+    function bd_geo_stats(): array
+    {
+        return BDGeo::getStatistics();
+    }
+}

@@ -27,6 +27,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Search Limit
+    |--------------------------------------------------------------------------
+    |
+    | Maximum number of results to return from search operations.
+    | Default: 100
+    | Set to 0 for unlimited (not recommended for performance).
+    |
+    */
+    'search_limit' => env('BD_GEO_SEARCH_LIMIT', 100),
+
+    /*
+    |--------------------------------------------------------------------------
     | Database Connection
     |--------------------------------------------------------------------------
     |
