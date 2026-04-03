@@ -1,0 +1,61 @@
+{
+    "name": "mazhar/bd-geo-location",
+    "description": "Bangladesh Geo Location data package for Laravel with support for Divisions, Districts, Upazilas, and Unions",
+    "keywords": [
+        "laravel",
+        "bangladesh",
+        "geo-location",
+        "location",
+        "geography",
+        "bd",
+        "divisions",
+        "districts",
+        "upazilas",
+        "unions"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "mazharvai",
+            "email": "mazharvai007@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "orchestra/testbench": "^8.0|^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mazhar\\BDGeoLocation\\": "src/"
+        },
+        "files": [
+            "src/Support/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Mazhar\\BDGeoLocation\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mazhar\\BDGeoLocation\\BDGeoServiceProvider"
+            ],
+            "aliases": {
+                "BDGeo": "Mazhar\\BDGeoLocation\\Facades\\BDGeo"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
