@@ -1,9 +1,9 @@
 <?php
 
-namespace Mazhar\BDGeoLocation\Facades;
+namespace Mazharvai\BDGeoLocation\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Mazhar\BDGeoLocation\Services\GeoService;
+use Mazharvai\BDGeoLocation\Services\GeoService;
 
 /**
  * @method static array getAllDivisions()

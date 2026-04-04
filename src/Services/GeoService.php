@@ -1,6 +1,6 @@
 <?php
 
-namespace Mazhar\BDGeoLocation\Services;
+namespace Mazharvai\BDGeoLocation\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -170,12 +170,11 @@ class GeoService
             $districts = [];
 
             foreach ($this->getAllDivisions() as $division) {
-                $divisionData = $division ?? [];
-                $divisionId = $divisionData['id'] ?? '';
-                $divisionName = $divisionData['name'] ?? '';
-                $divisionNameBn = $divisionData['name_bn'] ?? '';
+                $divisionId = $division['id'] ?? '';
+                $divisionName = $division['name'] ?? '';
+                $divisionNameBn = $division['nameBn'] ?? '';
 
-                foreach ($divisionData['districts'] ?? [] as $district) {
+                foreach ($division['districts'] ?? [] as $district) {
                     $districts[] = array_merge($district, [
                         'division_id' => $divisionId,
                         'division_name' => $divisionName,
@@ -237,16 +236,14 @@ class GeoService
             $upazilas = [];
 
             foreach ($this->getAllDivisions() as $division) {
-                $divisionData = $division ?? [];
-                $divisionId = $divisionData['id'] ?? '';
-                $divisionName = $divisionData['name'] ?? '';
+                $divisionId = $division['id'] ?? '';
+                $divisionName = $division['name'] ?? '';
 
-                foreach ($divisionData['districts'] ?? [] as $district) {
-                    $districtData = $district ?? [];
-                    $districtId = $districtData['id'] ?? '';
-                    $districtName = $districtData['name'] ?? '';
+                foreach ($division['districts'] ?? [] as $district) {
+                    $districtId = $district['id'] ?? '';
+                    $districtName = $district['name'] ?? '';
 
-                    foreach ($districtData['upazilas'] ?? [] as $upazila) {
+                    foreach ($district['upazilas'] ?? [] as $upazila) {
                         $upazilas[] = array_merge($upazila, [
                             'district_id' => $districtId,
                             'district_name' => $districtName,
@@ -310,21 +307,18 @@ class GeoService
             $unions = [];
 
             foreach ($this->getAllDivisions() as $division) {
-                $divisionData = $division ?? [];
-                $divisionId = $divisionData['id'] ?? '';
-                $divisionName = $divisionData['name'] ?? '';
+                $divisionId = $division['id'] ?? '';
+                $divisionName = $division['name'] ?? '';
 
-                foreach ($divisionData['districts'] ?? [] as $district) {
-                    $districtData = $district ?? [];
-                    $districtId = $districtData['id'] ?? '';
-                    $districtName = $districtData['name'] ?? '';
+                foreach ($division['districts'] ?? [] as $district) {
+                    $districtId = $district['id'] ?? '';
+                    $districtName = $district['name'] ?? '';
 
-                    foreach ($districtData['upazilas'] ?? [] as $upazila) {
-                        $upazilaData = $upazila ?? [];
-                        $upazilaId = $upazilaData['id'] ?? '';
-                        $upazilaName = $upazilaData['name'] ?? '';
+                    foreach ($district['upazilas'] ?? [] as $upazila) {
+                        $upazilaId = $upazila['id'] ?? '';
+                        $upazilaName = $upazila['name'] ?? '';
 
-                        foreach ($upazilaData['unions'] ?? [] as $union) {
+                        foreach ($upazila['unions'] ?? [] as $union) {
                             $unions[] = array_merge($union, [
                                 'upazila_id' => $upazilaId,
                                 'upazila_name' => $upazilaName,
@@ -409,7 +403,7 @@ class GeoService
                 }
 
                 $name = $item['name'] ?? '';
-                $nameBn = $item['name_bn'] ?? '';
+                $nameBn = $item['nameBn'] ?? '';
 
                 if ($this->matchesSearchTerm($name, $nameBn, $termLower)) {
                     $results[] = array_merge($item, ['type' => $type]);
@@ -472,7 +466,7 @@ class GeoService
             case 'district':
                 $item = $this->getDistrictById($id);
                 if ($item) {
-                    $divisionId = is_array($item) ? ($item['division_id'] ?? '') : '';
+                    $divisionId = $item['division_id'] ?? '';
                     $division = $this->getDivisionById($divisionId);
                     $hierarchy = [
                         'division' => $division,
@@ -484,9 +478,9 @@ class GeoService
             case 'upazila':
                 $item = $this->getUpazilaById($id);
                 if ($item) {
-                    $districtId = is_array($item) ? ($item['district_id'] ?? '') : '';
+                    $districtId = $item['district_id'] ?? '';
                     $district = $this->getDistrictById($districtId);
-                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '' ?? '') : null;
+                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '') : null;
                     $hierarchy = [
                         'division' => $division,
                         'district' => $district,
@@ -498,10 +492,10 @@ class GeoService
             case 'union':
                 $item = $this->getUnionById($id);
                 if ($item) {
-                    $upazilaId = is_array($item) ? ($item['upazila_id'] ?? '') : '';
+                    $upazilaId = $item['upazila_id'] ?? '';
                     $upazila = $this->getUpazilaById($upazilaId);
-                    $district = $upazila ? $this->getDistrictById($upazila['district_id'] ?? '' ?? '') : null;
-                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '' ?? '') : null;
+                    $district = $upazila ? $this->getDistrictById($upazila['district_id'] ?? '') : null;
+                    $division = $district ? $this->getDivisionById($district['division_id'] ?? '') : null;
                     $hierarchy = [
                         'division' => $division,
                         'district' => $district,

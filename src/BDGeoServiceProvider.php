@@ -1,11 +1,11 @@
 <?php
 
-namespace Mazhar\BDGeoLocation;
+namespace Mazharvai\BDGeoLocation;
 
 use Illuminate\Support\ServiceProvider;
-use Mazhar\BDGeoLocation\Commands\SeedGeoDataCommand;
-use Mazhar\BDGeoLocation\Commands\CacheGeoDataCommand;
-use Mazhar\BDGeoLocation\Services\GeoService;
+use Mazharvai\BDGeoLocation\Commands\SeedGeoDataCommand;
+use Mazharvai\BDGeoLocation\Commands\CacheGeoDataCommand;
+use Mazharvai\BDGeoLocation\Services\GeoService;
 
 class BDGeoServiceProvider extends ServiceProvider
 {

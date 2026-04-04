@@ -1,10 +1,10 @@
 <?php
 
-namespace Mazhar\BDGeoLocation\Validation\Rules;
+namespace Mazharvai\BDGeoLocation\Validation\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Mazhar\BDGeoLocation\Facades\BDGeo;
+use Mazharvai\BDGeoLocation\Facades\BDGeo;
 
 class BDDivision implements ValidationRule
 {

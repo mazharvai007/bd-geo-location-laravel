@@ -10,6 +10,6 @@ parameters:
 
     ignoreErrors:
         # Add specific errors to ignore here if needed
+        #     identifier: missingType.iterableValue
 
-    checkMissingIterableValueType: false
     reportUnmatchedIgnoredErrors: false

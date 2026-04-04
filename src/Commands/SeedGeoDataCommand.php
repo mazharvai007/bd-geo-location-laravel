@@ -1,10 +1,10 @@
 <?php
 
-namespace Mazhar\BDGeoLocation\Commands;
+namespace Mazharvai\BDGeoLocation\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Mazhar\BDGeoLocation\Services\GeoService;
+use Mazharvai\BDGeoLocation\Services\GeoService;
 
 class SeedGeoDataCommand extends Command
 {

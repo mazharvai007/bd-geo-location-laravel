@@ -1,11 +1,11 @@
 <?php
 
-namespace Mazhar\BDGeoLocation\Tests;
+namespace Mazharvai\BDGeoLocation\Tests;
 
-use Mazhar\BDGeoLocation\Facades\BDGeo;
-use Mazhar\BDGeoLocation\Services\GeoService;
+use Mazharvai\BDGeoLocation\Facades\BDGeo;
+use Mazharvai\BDGeoLocation\Services\GeoService;
 use Orchestra\Testbench\TestCase;
-use Mazhar\BDGeoLocation\BDGeoServiceProvider;
+use Mazharvai\BDGeoLocation\BDGeoServiceProvider;
 use InvalidArgumentException;
 
 class GeoServiceTest extends TestCase
@@ -32,7 +32,7 @@ class GeoServiceTest extends TestCase
         $this->assertCount(8, $divisions);
         $this->assertArrayHasKey('id', $divisions[0]);
         $this->assertArrayHasKey('name', $divisions[0]);
-        $this->assertArrayHasKey('name_bn', $divisions[0]);
+        $this->assertArrayHasKey('nameBn', $divisions[0]);
     }
 
     public function test_get_division_by_id(): void
@@ -93,7 +93,7 @@ class GeoServiceTest extends TestCase
 
     public function test_get_geo_hierarchy(): void
     {
-        $hierarchy = BDGeo::getGeoHierarchy('303427', 'upazila');
+        $hierarchy = BDGeo::getGeoHierarchy('175', 'upazila');
 
         $this->assertIsArray($hierarchy);
         $this->assertArrayHasKey('division', $hierarchy);
@@ -269,5 +269,256 @@ class GeoServiceTest extends TestCase
 
         $this->assertIsArray($results);
         // Should handle Bengali unicode properly
+    }
+
+    public function test_empty_id_throws_exception(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        BDGeo::getDivisionById('');
+    }
+
+    public function test_get_district_by_non_existent_id_returns_null(): void
+    {
+        $district = BDGeo::getDistrictById('999999');
+
+        $this->assertNull($district);
+    }
+
+    public function test_get_upazila_by_non_existent_id_returns_null(): void
+    {
+        $upazila = BDGeo::getUpazilaById('999999');
+
+        $this->assertNull($upazila);
+    }
+
+    public function test_get_union_by_non_existent_id_returns_null(): void
+    {
+        $union = BDGeo::getUnionById('999999');
+
+        $this->assertNull($union);
+    }
+
+    public function test_get_districts_by_non_existent_division_returns_empty(): void
+    {
+        $districts = BDGeo::getDistrictsByDivision('999999');
+
+        $this->assertIsArray($districts);
+        $this->assertEmpty($districts);
+    }
+
+    public function test_get_upazilas_by_non_existent_district_returns_empty(): void
+    {
+        $upazilas = BDGeo::getUpazilasByDistrict('999999');
+
+        $this->assertIsArray($upazilas);
+        $this->assertEmpty($upazilas);
+    }
+
+    public function test_get_unions_by_non_existent_upazila_returns_empty(): void
+    {
+        $unions = BDGeo::getUnionsByUpazila('999999');
+
+        $this->assertIsArray($unions);
+        $this->assertEmpty($unions);
+    }
+
+    public function test_geo_hierarchy_for_non_existent_location_returns_null(): void
+    {
+        $hierarchy = BDGeo::getGeoHierarchy('999999', 'district');
+
+        $this->assertNull($hierarchy);
+    }
+
+    public function test_geo_hierarchy_division_type(): void
+    {
+        $hierarchy = BDGeo::getGeoHierarchy('30', 'division');
+
+        $this->assertIsArray($hierarchy);
+        $this->assertArrayHasKey('division', $hierarchy);
+        $this->assertArrayNotHasKey('district', $hierarchy);
+        $this->assertEquals('Dhaka', $hierarchy['division']['name']);
+    }
+
+    public function test_geo_hierarchy_district_type(): void
+    {
+        $hierarchy = BDGeo::getGeoHierarchy('23', 'district');
+
+        $this->assertIsArray($hierarchy);
+        $this->assertArrayHasKey('division', $hierarchy);
+        $this->assertArrayHasKey('district', $hierarchy);
+        $this->assertArrayNotHasKey('upazila', $hierarchy);
+    }
+
+    public function test_geo_hierarchy_union_type(): void
+    {
+        // Find a valid union ID first
+        $unions = BDGeo::getAllUnions();
+        $unionId = $unions[0]['id'] ?? null;
+
+        $this->assertNotNull($unionId, 'No unions found in data');
+
+        $hierarchy = BDGeo::getGeoHierarchy($unionId, 'union');
+
+        $this->assertIsArray($hierarchy);
+        $this->assertArrayHasKey('division', $hierarchy);
+        $this->assertArrayHasKey('district', $hierarchy);
+        $this->assertArrayHasKey('upazila', $hierarchy);
+        $this->assertArrayHasKey('union', $hierarchy);
+    }
+
+    public function test_search_returns_correct_structure(): void
+    {
+        $results = BDGeo::searchByName('Dhaka');
+
+        $this->assertIsArray($results);
+        if (!empty($results)) {
+            $this->assertArrayHasKey('type', $results[0]);
+            $this->assertContains($results[0]['type'], ['division', 'district', 'upazila', 'union']);
+        }
+    }
+
+    public function test_search_with_very_long_string(): void
+    {
+        $veryLongString = str_repeat('a', 1000);
+        $results = BDGeo::searchByName($veryLongString);
+
+        $this->assertIsArray($results);
+        // Should handle long strings gracefully (truncated to 100 chars)
+    }
+
+    public function test_search_with_null_bytes(): void
+    {
+        $results = BDGeo::searchByName("Dhaka\x00");
+
+        $this->assertIsArray($results);
+        // Should handle null bytes gracefully
+    }
+
+    public function test_search_with_control_characters(): void
+    {
+        $results = BDGeo::searchByName("Dhaka\x01\x02\x03");
+
+        $this->assertIsArray($results);
+        // Should handle control characters gracefully
+    }
+
+    public function test_cache_clear_and_reload(): void
+    {
+        $divisions1 = BDGeo::getAllDivisions();
+        BDGeo::clearCache();
+        $divisions2 = BDGeo::getAllDivisions();
+
+        $this->assertEquals($divisions1, $divisions2);
+    }
+
+    public function test_statistics_returns_correct_counts(): void
+    {
+        $stats = BDGeo::getStatistics();
+
+        $this->assertGreaterThan(0, $stats['divisions']);
+        $this->assertGreaterThan(0, $stats['districts']);
+        $this->assertGreaterThan(0, $stats['upazilas']);
+        $this->assertGreaterThan(0, $stats['unions']);
+    }
+
+    public function test_district_has_parent_division_info(): void
+    {
+        $districts = BDGeo::getAllDistricts();
+
+        $this->assertNotEmpty($districts);
+        $district = $districts[0];
+
+        $this->assertArrayHasKey('division_id', $district);
+        $this->assertArrayHasKey('division_name', $district);
+        $this->assertNotEmpty($district['division_id']);
+    }
+
+    public function test_upazila_has_parent_info(): void
+    {
+        $upazilas = BDGeo::getAllUpazilas();
+
+        $this->assertNotEmpty($upazilas);
+        $upazila = $upazilas[0];
+
+        $this->assertArrayHasKey('district_id', $upazila);
+        $this->assertArrayHasKey('district_name', $upazila);
+        $this->assertArrayHasKey('division_id', $upazila);
+        $this->assertArrayHasKey('division_name', $upazila);
+    }
+
+    public function test_union_has_complete_parent_info(): void
+    {
+        $unions = BDGeo::getAllUnions();
+
+        $this->assertNotEmpty($unions);
+        $union = $unions[0];
+
+        $this->assertArrayHasKey('upazila_id', $union);
+        $this->assertArrayHasKey('upazila_name', $union);
+        $this->assertArrayHasKey('district_id', $union);
+        $this->assertArrayHasKey('district_name', $union);
+        $this->assertArrayHasKey('division_id', $union);
+        $this->assertArrayHasKey('division_name', $union);
+    }
+
+    public function test_case_insensitive_search(): void
+    {
+        $results1 = BDGeo::searchByName('dhaka');
+        $results2 = BDGeo::searchByName('DHAKA');
+        $results3 = BDGeo::searchByName('Dhaka');
+
+        $this->assertNotEmpty($results1);
+        $this->assertNotEmpty($results2);
+        $this->assertNotEmpty($results3);
+        $this->assertEquals(count($results1), count($results2));
+        $this->assertEquals(count($results1), count($results3));
+    }
+
+    public function test_partial_match_search(): void
+    {
+        $results = BDGeo::searchByName('Dha');
+
+        $this->assertIsArray($results);
+        $this->assertGreaterThan(0, count($results));
+        // Should find locations containing "Dha"
+    }
+
+    public function test_search_empty_after_sanitization(): void
+    {
+        $results = BDGeo::searchByName('   ');
+
+        $this->assertIsArray($results);
+        $this->assertEmpty($results);
+    }
+
+    public function test_all_divisions_have_required_fields(): void
+    {
+        $divisions = BDGeo::getAllDivisions();
+
+        foreach ($divisions as $division) {
+            $this->assertArrayHasKey('id', $division);
+            $this->assertArrayHasKey('name', $division);
+            $this->assertArrayHasKey('nameBn', $division);
+        }
+    }
+
+    public function test_all_districts_have_required_fields(): void
+    {
+        $districts = BDGeo::getAllDistricts();
+
+        foreach (array_slice($districts, 0, 10) as $district) {
+            $this->assertArrayHasKey('id', $district);
+            $this->assertArrayHasKey('name', $district);
+            $this->assertArrayHasKey('division_id', $district);
+        }
+    }
+
+    public function test_service_instance_is_singleton_like(): void
+    {
+        $service1 = app(\Mazharvai\BDGeoLocation\Services\GeoService::class);
+        $service2 = app(\Mazharvai\BDGeoLocation\Services\GeoService::class);
+
+        $this->assertSame($service1, $service2);
     }
 }

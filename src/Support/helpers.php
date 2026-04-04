@@ -1,6 +1,6 @@
 <?php
 
-use Mazhar\BDGeoLocation\Facades\BDGeo;
+use Mazharvai\BDGeoLocation\Facades\BDGeo;
 
 if (!function_exists('bd_divisions')) {
     /**

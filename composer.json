@@ -1,5 +1,5 @@
 {
-    "name": "mazhar/bd-geo-location",
+    "name": "mazharvai/bd-geo-location",
     "description": "Bangladesh Geo Location data package for Laravel with support for Divisions, Districts, Upazilas, and Unions",
     "keywords": [
         "laravel",
@@ -48,7 +48,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Mazhar\\BDGeoLocation\\": "src/"
+            "Mazharvai\\BDGeoLocation\\": "src/"
         },
         "files": [
             "src/Support/helpers.php"
@@ -56,16 +56,16 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Mazhar\\BDGeoLocation\\Tests\\": "tests/"
+            "Mazharvai\\BDGeoLocation\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Mazhar\\BDGeoLocation\\BDGeoServiceProvider"
+                "Mazharvai\\BDGeoLocation\\BDGeoServiceProvider"
             ],
             "aliases": {
-                "BDGeo": "Mazhar\\BDGeoLocation\\Facades\\BDGeo"
+                "BDGeo": "Mazharvai\\BDGeoLocation\\Facades\\BDGeo"
             }
         }
     },
