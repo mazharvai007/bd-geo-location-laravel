@@ -8,12 +8,24 @@
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="false"
+         disableCodeCoverageIgnore="true"
 >
     <testsuites>
         <testsuite name="Package Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>src/Support</directory>
+        </exclude>
+        <report>
+            <clover outputFile="coverage.xml"/>
+        </report>
+    </coverage>
     <php>
         <env name="APP_KEY" value="base64:test"/>
         <env name="APP_DEBUG" value="true"/>
