@@ -41,16 +41,7 @@ jobs:
           composer update --prefer-dist --no-interaction
 
       - name: Execute tests
-        run: vendor/bin/phpunit --coverage-clover=coverage.xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          flags: php-${{ matrix.php }}-laravel-${{ matrix.laravel }}
-          name: php-${{ matrix.php }}-laravel-${{ matrix.laravel }}
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
+        run: vendor/bin/phpunit
 
   phpstan:
     name: PHPStan Analysis
