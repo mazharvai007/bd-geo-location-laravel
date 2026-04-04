@@ -71,9 +71,6 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-stable --prefer-dist --no-interaction
 
-      - name: Install PHPStan
-        run: composer require --dev larastan/larastan:^2.0 --no-interaction
-
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --memory-limit=2G
 
