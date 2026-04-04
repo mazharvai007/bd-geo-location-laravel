@@ -57,8 +57,9 @@ return [
     // Data source: 'json' (default) or 'database'
     'data_source' => env('BD_GEO_DATA_SOURCE', 'json'),
 
-    // Cache duration in seconds (default: 7 days)
-    'cache_duration' => env('BD_GEO_CACHE_DURATION', 604800),
+    // Cache duration in seconds (default: 0 = disabled)
+    // Set to a positive value to enable caching (e.g., 604800 for 7 days)
+    'cache_duration' => env('BD_GEO_CACHE_DURATION', 0),
 
     // Database table prefix
     'table_prefix' => env('BD_GEO_TABLE_PREFIX', 'bd_'),
@@ -200,16 +201,6 @@ php artisan migrate
 
 # Seed data to database
 php artisan bd-geo:seed
-```
-
-### Cache Management
-
-```bash
-# Clear cached geo data
-php artisan bd-geo:cache --clear
-
-# Warm up cache
-php artisan bd-geo:cache --warm
 ```
 
 ## Database Support (Optional)

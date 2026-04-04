@@ -19,11 +19,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | How long to cache the geo data in seconds.
-    | Default: 604800 (7 days)
-    | Set to 0 to disable caching.
+    | Default: 0 (disabled)
+    | Set to a positive value to enable caching (e.g., 604800 for 7 days).
     |
     */
-    'cache_duration' => env('BD_GEO_CACHE_DURATION', 604800),
+    'cache_duration' => env('BD_GEO_CACHE_DURATION', 0),
 
     /*
     |--------------------------------------------------------------------------

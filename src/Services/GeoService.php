@@ -54,37 +54,51 @@ class GeoService
      */
     protected function loadFromJson(): void
     {
+        // Skip caching if cache_duration is 0
+        if ($this->cacheDuration <= 0) {
+            $this->data = $this->loadJsonFile();
+            return;
+        }
+
         $cacheKey = 'bd-geo-location-data';
 
         $this->data = Cache::remember($cacheKey, $this->cacheDuration, function () {
-            $jsonPath = $this->getDataFilePath();
-
-            if (!file_exists($jsonPath)) {
-                report(new \RuntimeException("Geo data file not found: {$jsonPath}"));
-                return [];
-            }
-
-            if (!is_readable($jsonPath)) {
-                report(new \RuntimeException("Geo data file is not readable: {$jsonPath}"));
-                return [];
-            }
-
-            $jsonContent = file_get_contents($jsonPath);
-
-            if ($jsonContent === false) {
-                report(new \RuntimeException("Failed to read geo data file: {$jsonPath}"));
-                return [];
-            }
-
-            $data = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
-
-            if (!is_array($data)) {
-                report(new \RuntimeException("Invalid geo data format"));
-                return [];
-            }
-
-            return $data;
+            return $this->loadJsonFile();
         });
+    }
+
+    /**
+     * Load and parse JSON file
+     */
+    protected function loadJsonFile(): array
+    {
+        $jsonPath = $this->getDataFilePath();
+
+        if (!file_exists($jsonPath)) {
+            report(new \RuntimeException("Geo data file not found: {$jsonPath}"));
+            return [];
+        }
+
+        if (!is_readable($jsonPath)) {
+            report(new \RuntimeException("Geo data file is not readable: {$jsonPath}"));
+            return [];
+        }
+
+        $jsonContent = file_get_contents($jsonPath);
+
+        if ($jsonContent === false) {
+            report(new \RuntimeException("Failed to read geo data file: {$jsonPath}"));
+            return [];
+        }
+
+        $data = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
+
+        if (!is_array($data)) {
+            report(new \RuntimeException("Invalid geo data format"));
+            return [];
+        }
+
+        return $data;
     }
 
     /**
@@ -514,8 +528,12 @@ class GeoService
      */
     public function clearCache(): void
     {
-        Cache::forget('bd-geo-location-data');
+        // Only clear Laravel cache if it was enabled
+        if ($this->cacheDuration > 0) {
+            Cache::forget('bd-geo-location-data');
+        }
 
+        // Clear in-memory caches
         $this->divisionsCache = null;
         $this->districtsCache = null;
         $this->upazilasCache = null;

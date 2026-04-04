@@ -4,7 +4,6 @@ namespace Mazharvai\BDGeoLocation;
 
 use Illuminate\Support\ServiceProvider;
 use Mazharvai\BDGeoLocation\Commands\SeedGeoDataCommand;
-use Mazharvai\BDGeoLocation\Commands\CacheGeoDataCommand;
 use Mazharvai\BDGeoLocation\Services\GeoService;
 
 class BDGeoServiceProvider extends ServiceProvider
@@ -36,7 +35,6 @@ class BDGeoServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 SeedGeoDataCommand::class,
-                CacheGeoDataCommand::class,
             ]);
         }
     }

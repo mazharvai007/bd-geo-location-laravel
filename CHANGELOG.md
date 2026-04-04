@@ -12,11 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release
 - Complete Bangladesh geo location data (8 Divisions, 68 Districts, 531 Upazilas, 4,916 Unions)
-- JSON-based data storage with caching support
+- JSON-based data storage with optional caching support
 - Laravel Facade support
 - Helper functions for quick access
 - Validation rules for all location types
-- Artisan commands (bd-geo:seed, bd-geo:cache)
+- Artisan commands (bd-geo:seed)
 - Database support with migrations and models
 - Search functionality
 - Geo hierarchy retrieval
@@ -27,11 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release by mazharvai
 - Complete Bangladesh geo location data (8 Divisions, 68 Districts, 531 Upazilas, 4,916 Unions)
-- JSON-based data storage with caching support
+- JSON-based data storage with optional caching support
 - Laravel Facade support
 - Helper functions for quick access
 - Validation rules for all location types
-- Artisan commands (bd-geo:seed, bd-geo:cache)
+- Artisan commands (bd-geo:seed)
 - Database support with migrations and models
 - Search functionality
 - Geo hierarchy retrieval
